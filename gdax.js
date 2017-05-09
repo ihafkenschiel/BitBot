@@ -1,5 +1,7 @@
 // Reference: https://docs.gdax.com/
 
+console.log("Loading...\n");
+
 var Gdax = require('gdax');
 
 var callback = function(err, response, data) {
@@ -14,7 +16,12 @@ var publicClient = new Gdax.PublicClient();
 
 //publicClient.getProductOrderBook(callback); //[ price, size, num-orders ]
 
-//publicClient.getProductTicker(callback);
+
+var tickerCallback = function(err, response, data) {
+  console.log("\nCurrent Ticker:");
+  console.log(data);
+};
+publicClient.getProductTicker(tickerCallback);
 
 //publicClient.getProductTrades(callback);
 
@@ -29,7 +36,6 @@ var publicClient = new Gdax.PublicClient();
 
 /** Private Functions **/
 
-/*
 var apiURI = 'https://api.gdax.com';
 var sandboxURI = 'https://api-public.sandbox.gdax.com';
 
@@ -39,14 +45,17 @@ var passphrase = '';
 
 var authedClient = new Gdax.AuthenticatedClient(
   key, b64secret, passphrase, apiURI);
-  
-//authedClient.getAccounts(callback);
+
+var accountsCallback = function(err, response, data) {
+  console.log("\nPrivate Accounts:");
+  console.log(data);
+};
+authedClient.getAccounts(accountsCallback);
 
 var usd_account_id = '';
 var btc_account_id = '';
 var eth_account_id = '';
 var ltc_account_id = '';
-*/
 
 function buyBTC(price, size) {
 	var buyParams = {
@@ -67,17 +76,20 @@ function sellBTC(price, size) {
 }
 
 
-function get USD_account() {
+function getUSD_account() {
 	authedClient.getAccount(usd_account_id, callback);
 }
 
-get USD_account();
+//getUSD_account();
 
 //authedClient.getAccountHistory(btc_account_id, callback);
 
 //authedClient.getAccountHolds(usd_account_id, callback);
 
 //authedClient.getFills(callback);
+
+console.log("Running simulation: ");
+runTrades();
 
 
 /** Websocket Client **/
@@ -88,6 +100,9 @@ function runTrades() {
 
 	var num_periods = 5;
 	var pct_std_dev = 0.0085; // percent of std dev
+	
+	var bank = 10;
+	var coins = 0;
 
 	var last_buy_price = 0;
 	var last_prices = [];
