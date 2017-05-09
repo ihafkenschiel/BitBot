@@ -105,16 +105,16 @@ function runTrades() {
 	var websocket = new Gdax.WebsocketClient(['LTC-USD']); // ['BTC-USD', 'ETH-USD', 'LTC-USD']
 
 	var num_periods = 5;
-	var pct_std_dev = 0.0085; // percent of std dev
-	
-	var bank = 10;
-	var coins = 0;
+	var pct_std_dev = 0.9; // percent of std dev
 
+	var cur_period = 0;
 	var last_buy_price = 0;
 	var last_prices = [];
 
 	websocket.on('message', function(data) { 
-		if (data['type'] == 'match') { //|| data['type'] == 'open'
+		if (data['type'] == 'match' || data['type'] == 'open') { //
+			cur_period++;
+		
 			//console.log(data); 
 		
 			var price = Number(data['price']);
@@ -126,41 +126,41 @@ function runTrades() {
 			}
 			//console.log(last_prices);
 		
-			var avg = average(last_prices);
-			var std_dev = standardDeviation(last_prices);
-			var limit_high = avg + pct_std_dev * std_dev;
-			var limit_low = avg - pct_std_dev * std_dev;
-			//console.log("Average: " + avg);
-			//console.log("Price - Average: " + (price - avg) );
-			//console.log("std_dev: " + std_dev);
-			//console.log("limit_high: " + limit_high);
-			//console.log("limit_low: " + limit_low);
+			if (cur_period >= num_periods) {
+				num_period = 0;
 		
-			if (price > limit_high) {
-				console.log("--SELL @ " + price);
+				var avg = average(last_prices);
+				var std_dev = standardDeviation(last_prices);
+				var limit_high = avg + pct_std_dev * std_dev;
+				var limit_low = avg - pct_std_dev * std_dev;
+				console.log("Average: " + avg);
+				//console.log("Price - Average: " + (price - avg) );
+				console.log("std_dev: " + std_dev);
+				console.log("limit_high: " + limit_high);
+				console.log("limit_low: " + limit_low);
+		
+				console.log("--SELL @ " + round2decimals(limit_high) + " for price " + price);
 				//bank += price * coins;
 				//coins = 0;
-				
-				authedClient.cancelAllOrders({product_id: 'LTC-USD'}, callback);
-				sellCoins('LTC-USD', price, 0.1);
-				
-				var profit = price - last_buy_price;
-				console.log("=====PROFIT: $" + profit);
-			} else if (price < limit_low) {
 			
+				//authedClient.cancelAllOrders({product_id: 'LTC-USD'}, callback);
+				//sellCoins('LTC-USD', round2decimals(limit_high), 0.1);
+			
+				//var profit = price - last_buy_price;
+				//console.log("=====PROFIT: $" + profit);
+		
 				//var afford = (bank / price);
 				//bank -= price * afford;
 				//coins += afford;
+			
+				//authedClient.cancelAllOrders({product_id: 'LTC-USD'}, callback);
+				//buyCoins('LTC-USD', round2decimals(limit_low), 0.1);
+			
+				//last_buy_price = price;
+				console.log("BUY @ " + round2decimals(limit_low) + " for price " + price);
 				
-				authedClient.cancelAllOrders({product_id: 'LTC-USD'}, callback);
-				buyCoins('LTC-USD', price, 0.1);
-				
-				last_buy_price = price;
-				console.log("BUY @ " + price);
-			}
-		
-			//console.log("Coins: " + coins);
-			//console.log("Bank: " + bank);
+			}		
+
 			console.log("-----\n");
 		}
 	});
@@ -188,4 +188,8 @@ function average(data){
 
   var avg = sum / data.length;
   return avg;
+}
+
+function round2decimals(numb) {
+	return parseFloat(Math.round(numb * 100) / 100).toFixed(2);
 }
