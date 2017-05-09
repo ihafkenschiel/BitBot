@@ -17,11 +17,11 @@ var publicClient = new Gdax.PublicClient();
 //publicClient.getProductOrderBook(callback); //[ price, size, num-orders ]
 
 
-var tickerCallback = function(err, response, data) {
-  console.log("\nCurrent Ticker:");
-  console.log(data);
-};
-publicClient.getProductTicker(tickerCallback);
+//var tickerCallback = function(err, response, data) {
+//  console.log("\nCurrent Ticker:");
+//  console.log(data);
+//};
+//publicClient.getProductTicker(tickerCallback);
 
 //publicClient.getProductTrades(callback);
 
@@ -57,20 +57,21 @@ var btc_account_id = '';
 var eth_account_id = '';
 var ltc_account_id = '';
 
-function buyBTC(price, size) {
+
+function buyCoins(type, price, size) {
 	var buyParams = {
 	  'price': price, // USD
 	  'size': size,  // BTC
-	  'product_id': 'BTC-USD',
+	  'product_id': type, //'BTC-USD',
 	};
 	authedClient.buy(buyParams, callback);
 }
 
-function sellBTC(price, size) {
+function sellCoins(type, price, size) {
 	var buyParams = {
 	  'price': price, // USD
 	  'size': size,  // BTC
-	  'product_id': 'BTC-USD',
+	  'product_id': type, //'BTC-USD',
 	};
 	authedClient.sell(sellParams, callback);
 }
@@ -88,7 +89,9 @@ function getUSD_account() {
 
 //authedClient.getFills(callback);
 
-console.log("Running simulation: ");
+//console.log("First purchase: ");
+//buyCoins('LTC-USD', '25.00', '0.01');
+
 runTrades();
 
 
@@ -96,7 +99,7 @@ runTrades();
 
 function runTrades() {
 
-	var websocket = new Gdax.WebsocketClient(['BTC-USD']); // ['BTC-USD', 'ETH-USD']
+	var websocket = new Gdax.WebsocketClient(['LTC-USD']); // ['BTC-USD', 'ETH-USD', 'LTC-USD']
 
 	var num_periods = 5;
 	var pct_std_dev = 0.0085; // percent of std dev
@@ -107,32 +110,8 @@ function runTrades() {
 	var last_buy_price = 0;
 	var last_prices = [];
 
-	function standardDeviation(values){
-	  var avg = average(values);
-  
-	  var squareDiffs = values.map(function(value){
-		var diff = value - avg;
-		var sqrDiff = diff * diff;
-		return sqrDiff;
-	  });
-  
-	  var avgSquareDiff = average(squareDiffs);
-
-	  var stdDev = Math.sqrt(avgSquareDiff);
-	  return stdDev;
-	}
-
-	function average(data){
-	  var sum = data.reduce(function(sum, value){
-		return sum + value;
-	  }, 0);
-
-	  var avg = sum / data.length;
-	  return avg;
-	}
-
 	websocket.on('message', function(data) { 
-		//if (data['type'] == 'match') {
+		if (data['type'] == 'match' || data['type'] == 'open') {
 			//console.log(data); 
 		
 			var price = Number(data['price']);
@@ -172,6 +151,30 @@ function runTrades() {
 			console.log("Coins: " + coins);
 			console.log("Bank: " + bank);
 			console.log("-----\n");
-		//}
+		}
 	});
+}
+
+function standardDeviation(values){
+  var avg = average(values);
+
+  var squareDiffs = values.map(function(value){
+	var diff = value - avg;
+	var sqrDiff = diff * diff;
+	return sqrDiff;
+  });
+
+  var avgSquareDiff = average(squareDiffs);
+
+  var stdDev = Math.sqrt(avgSquareDiff);
+  return stdDev;
+}
+
+function average(data){
+  var sum = data.reduce(function(sum, value){
+	return sum + value;
+  }, 0);
+
+  var avg = sum / data.length;
+  return avg;
 }
